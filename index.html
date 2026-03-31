@@ -2612,9 +2612,10 @@ function hideAdmin() {
 }
 
 const GAS_KEY = "eq_gas_url";
+const GAS_DEFAULT = "https://script.google.com/macros/s/AKfycbzjqVP9lz-E8-IL9XiH8WufMtUgXpK-rqhqpGe2I_ajh9GT9UnPaavW58_URONGr5SLiw/exec";
 
 function getGasUrl() {
-  return localStorage.getItem(GAS_KEY) || "";
+  return localStorage.getItem(GAS_KEY) || GAS_DEFAULT;
 }
 
 function saveGasUrl() {
