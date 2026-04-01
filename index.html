@@ -3507,8 +3507,8 @@ function renderQuiz() {
       let cls='choice-btn';
       if(isAns){ cls+=' disabled'; if(c===blank.answer) cls+=' correct'; else if(c===sel[bi]) cls+=' wrong'; }
       else if(c===sel[bi]) cls+=' selected';
-      const safe=c.replace(/&/g,'&amp;').replace(/'/g,'&#39;');
-      return `<button class="${cls}" onclick="choose(${bi},'${safe}')">${c}</button>`;
+      const safeVal = JSON.stringify(c).replace(/"/g, '&quot;');
+      return `<button class="${cls}" onclick="choose(${bi},${safeVal})">${c}</button>`;
     }).join('');
     return `<div style="margin-bottom:${bi<q.blanks.length-1?'14px':'0'}">${label}<div class="choices">${btns}</div></div>`;
   }).join('');
