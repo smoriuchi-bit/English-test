@@ -51,6 +51,7 @@
   .choice-btn.correct  { background: #EAF3DE; border-color: #639922; color: #3B6D11; cursor: default; }
   .choice-btn.wrong    { background: #FCEBEB; border-color: #E24B4A; color: #A32D2D; cursor: default; }
   .choice-btn.disabled { cursor: default; }
+  .choice-btn.selected { background: #E8F0FD; border-color: #5B8DEF; color: #1a4fb5; font-weight: 600; }
   .feedback { display: none; font-size: 13px; margin-top: 12px; padding: 8px 12px; border-radius: 6px; line-height: 1.7; }
   .feedback.show { display: block; }
   .feedback.correct { background: #EAF3DE; color: #3B6D11; }
@@ -3505,6 +3506,7 @@ function renderQuiz() {
     const btns = shuffledC[current][bi].map(c => {
       let cls='choice-btn';
       if(isAns){ cls+=' disabled'; if(c===blank.answer) cls+=' correct'; else if(c===sel[bi]) cls+=' wrong'; }
+      else if(c===sel[bi]) cls+=' selected';
       const safe=c.replace(/&/g,'&amp;').replace(/'/g,'&#39;');
       return `<button class="${cls}" onclick="choose(${bi},'${safe}')">${c}</button>`;
     }).join('');
