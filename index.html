@@ -210,10 +210,17 @@ body { font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hirag
   <div id="adm-lock">
     <div style="font-size:13px;color:#6b6b68;margin-bottom:8px;">管理者パスワードを入力してください</div>
     <div class="adm-pass">
-      <input type="password" id="adm-pass-inp" placeholder="パスワード" onkeydown="if(event.key==='Enter')unlockAdmin()">
+      <input type="password" id="adm-pass-inp" placeholder="パスワード"
+             autocomplete="new-password"
+             onkeydown="if(event.key==='Enter')unlockAdmin()">
+      <button type="button" class="btn" id="adm-eye-btn"
+              onmousedown="document.getElementById('adm-pass-inp').type='text'"
+              onmouseup="document.getElementById('adm-pass-inp').type='password'"
+              onmouseleave="document.getElementById('adm-pass-inp').type='password'"
+              style="padding:8px 12px;font-size:13px;">👁</button>
       <button class="btn primary" onclick="unlockAdmin()">確認</button>
     </div>
-    <div id="adm-err" style="font-size:12px;color:#A32D2D;display:none;">パスワードが違います</div>
+    <div id="adm-err" style="font-size:12px;color:#A32D2D;display:none;margin-top:4px;">パスワードが違います</div>
   </div>
   <div id="adm-content" style="display:none;">
     <!-- GAS連携設定 -->
@@ -1096,13 +1103,16 @@ function initGasUI() {
 }
 
 function unlockAdmin() {
-  if (document.getElementById('adm-pass-inp').value === ADM_PASS) {
+  const typed = document.getElementById('adm-pass-inp').value.trim();
+  if (typed === ADM_PASS) {
     document.getElementById('adm-lock').style.display='none';
     document.getElementById('adm-content').style.display='block';
     initGasUI();
     renderAdminTable();
   } else {
-    document.getElementById('adm-err').style.display='block';
+    const err = document.getElementById('adm-err');
+    err.textContent = `パスワードが違います（入力値: "${typed}"）`;
+    err.style.display='block';
   }
 }
 
