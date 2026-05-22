@@ -36,13 +36,12 @@ body { font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hirag
 .progress-fill { height:4px; background:#378ADD; border-radius:2px; transition:width 0.4s ease; }
 .card { background:#fff; border:0.5px solid #e0dfd8; border-radius:12px; padding:1.25rem 1.5rem; margin-bottom:1rem; }
 .q-num { font-size:11px; font-weight:500; color:#378ADD; letter-spacing:0.06em; margin-bottom:10px; }
-.q-sentence { font-size:17px; font-weight:500; line-height:1.7; margin-bottom:6px; }
-.blank { display:inline-block; border-bottom:2px solid #378ADD; min-width:90px; text-align:center; color:#378ADD; font-weight:500; padding:0 6px; }
-.blank.correct { color:#3B6D11; border-color:#639922; }
-.blank.wrong { color:#A32D2D; border-color:#E24B4A; }
-.translation { font-size:13px; color:#6b6b68; margin-bottom:8px; line-height:1.5; }
-.hint { font-size:12px; color:#888780; background:#f5f4f0; border-radius:6px; padding:6px 10px; margin-bottom:14px; line-height:1.6; }
+.q-prompt { font-size:13px; color:#6b6b68; margin-bottom:10px; }
+.q-display { font-size:22px; font-weight:600; text-align:center; padding:18px 14px; background:#f5f4f0; border-radius:8px; margin-bottom:16px; line-height:1.5; word-break:break-word; }
+.q-display.en { font-size:26px; letter-spacing:0.02em; color:#1a1a18; }
+.q-display.ja { font-size:18px; color:#4a4a48; }
 .choices { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.choices-1col { grid-template-columns:1fr; }
 .choice-btn { background:#f5f4f0; border:0.5px solid #dddcd6; border-radius:8px; padding:10px 14px; font-size:14px; color:#1a1a18; cursor:pointer; text-align:left; transition:background 0.15s, border-color 0.15s; font-family:inherit; }
 .choice-btn:hover:not(.disabled) { background:#fff; border-color:#b4b2a9; }
 .choice-btn.correct { background:#EAF3DE; border-color:#639922; color:#3B6D11; cursor:default; }
@@ -96,7 +95,20 @@ body { font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hirag
 .wrong-txt { font-size:11px; color:#A32D2D; line-height:1.8; }
 .footer-note { position:fixed; bottom:0; right:0; left:0; background:rgba(245,244,240,0.92); backdrop-filter:blur(4px); border-top:0.5px solid #e0dfd8; padding:6px 16px; font-size:11px; color:#888780; text-align:right; line-height:1.6; z-index:999; }
 .range-badge { font-size:10px; background:#EBF3FC; color:#378ADD; border-radius:4px; padding:2px 6px; margin-left:6px; }
-@media (max-width:480px) { .choices { grid-template-columns:1fr; } .q-sentence { font-size:15px; } .wl-grid { grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); } .ss-grid { grid-template-columns:repeat(4,1fr); } }
+/* ===== 学年・組・出席番号 ===== */
+.step-label { font-size:11px; font-weight:600; color:#888780; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:8px; }
+.grade-row { display:flex; gap:8px; margin-bottom:16px; }
+.grade-btn { flex:1; background:#fff; border:0.5px solid #dddcd6; border-radius:8px; padding:13px 0; font-size:17px; font-weight:600; color:#1a1a18; cursor:pointer; text-align:center; transition:all 0.15s; }
+.grade-btn:hover { background:#EBF3FC; border-color:#378ADD; color:#378ADD; }
+.grade-btn.sel { background:#378ADD; border-color:#378ADD; color:#fff; }
+.class-row { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px; }
+.class-btn { background:#fff; border:0.5px solid #dddcd6; border-radius:8px; padding:10px 0; font-size:14px; font-weight:500; color:#1a1a18; cursor:pointer; text-align:center; transition:all 0.15s; }
+.class-btn:hover { background:#EBF3FC; border-color:#378ADD; color:#378ADD; }
+.class-btn.sel { background:#378ADD; border-color:#378ADD; color:#fff; }
+.step-block { margin-bottom:0; }
+.step-block + .step-block { margin-top:18px; border-top:0.5px solid #f0efe8; padding-top:18px; }
+.step-block.locked { opacity:0.35; pointer-events:none; }
+@media (max-width:480px) { .choices { grid-template-columns:1fr; } .q-sentence { font-size:15px; } .wl-grid { grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); } .ss-grid { grid-template-columns:repeat(4,1fr); } .class-row { grid-template-columns:repeat(4,1fr); } }
 </style>
 </head>
 <body>
@@ -105,21 +117,51 @@ body { font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hirag
 <div id="ss-wrap" class="wrap">
   <div class="quiz-header">
     <div class="ss-title">英語 穴埋め小テスト</div>
-    <div class="ss-sub">出席番号を選んでからスタートしてください<br><span style="font-size:11px;color:#888780;">📖 英単語ターゲット1900（6訂版）より出題</span></div>
+    <div class="ss-sub">学年・組・出席番号を選んでスタートしてください<br><span style="font-size:11px;color:#888780;">📖 英単語ターゲット1900（6訂版）全1900語より出題</span></div>
   </div>
   <div class="card">
-    <div style="font-size:13px;font-weight:500;color:#6b6b68;margin-bottom:10px;">出題範囲を選択</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;" id="range-select">
-      <button class="wl-tab active" onclick="setRange('all',this)">全範囲（1〜1900）</button>
-      <button class="wl-tab" onclick="setRange('1-500',this)">第1部（1〜500）</button>
-      <button class="wl-tab" onclick="setRange('501-1000',this)">第2部（501〜1000）</button>
-      <button class="wl-tab" onclick="setRange('1001-1500',this)">第3部（1001〜1500）</button>
-      <button class="wl-tab" onclick="setRange('1501-1900',this)">第4部（1501〜1900）</button>
+    <!-- 出題範囲 -->
+    <div class="step-block">
+      <div class="step-label">📚 出題範囲</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="range-select">
+        <button class="wl-tab active" onclick="setRange('all',this)">全範囲（1〜1900）</button>
+        <button class="wl-tab" onclick="setRange('1-500',this)">第1部（1〜500）</button>
+        <button class="wl-tab" onclick="setRange('501-1000',this)">第2部（501〜1000）</button>
+        <button class="wl-tab" onclick="setRange('1001-1500',this)">第3部（1001〜1500）</button>
+        <button class="wl-tab" onclick="setRange('1501-1900',this)">第4部（1501〜1900）</button>
+      </div>
     </div>
-    <div class="ss-grid" id="ss-grid"></div>
-    <button class="btn primary ss-start" id="ss-start-btn" onclick="startQuiz()" disabled>スタート →</button>
+    <!-- 学年 -->
+    <div class="step-block" style="margin-top:18px;border-top:0.5px solid #f0efe8;padding-top:18px;">
+      <div class="step-label">① 学年</div>
+      <div class="grade-row">
+        <button class="grade-btn" onclick="selectGrade(1,this)">1年</button>
+        <button class="grade-btn" onclick="selectGrade(2,this)">2年</button>
+        <button class="grade-btn" onclick="selectGrade(3,this)">3年</button>
+      </div>
+    </div>
+    <!-- 組 -->
+    <div class="step-block" id="class-block" style="margin-top:18px;border-top:0.5px solid #f0efe8;padding-top:18px;">
+      <div class="step-label">② 組</div>
+      <div class="class-row" id="class-grid">
+        <button class="class-btn" onclick="selectClass('01',this)">01組</button>
+        <button class="class-btn" onclick="selectClass('02',this)">02組</button>
+        <button class="class-btn" onclick="selectClass('03',this)">03組</button>
+        <button class="class-btn" onclick="selectClass('04',this)">04組</button>
+        <button class="class-btn" onclick="selectClass('05',this)">05組</button>
+        <button class="class-btn" onclick="selectClass('06',this)">06組</button>
+        <button class="class-btn" onclick="selectClass('07',this)">07組</button>
+        <button class="class-btn" onclick="selectClass('08',this)">08組</button>
+      </div>
+    </div>
+    <!-- 出席番号 -->
+    <div class="step-block" id="num-block" style="margin-top:18px;border-top:0.5px solid #f0efe8;padding-top:18px;">
+      <div class="step-label">③ 出席番号</div>
+      <div class="ss-grid" id="ss-grid"></div>
+    </div>
+    <button class="btn primary ss-start" id="ss-start-btn" onclick="startQuiz()" disabled style="width:100%;padding:12px;font-size:15px;margin-top:18px;">スタート →</button>
   </div>
-  <div style="text-align:right;margin-top:10px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;">
     <button style="background:none;border:none;color:#378ADD;font-size:12px;cursor:pointer;text-decoration:underline;font-family:inherit;" onclick="showAdmin()">管理者ページ</button>
   </div>
 </div>
@@ -660,6 +702,8 @@ const WORDS = [
 
 const QUIZ_SIZE = 10;
 const ADM_PASS = "1234";
+let grade = null;       // 1, 2, 3
+let className = null;   // '01'〜'08'
 let studentNum = null;
 let quizRange = 'all';
 let quizWords = [];
@@ -684,7 +728,28 @@ function getWordsByRange() {
   return WORDS;
 }
 
-/* ===== 出席番号 ===== */
+/* ===== 学年・組・出席番号 ===== */
+function selectGrade(g, btn) {
+  grade = g;
+  className = null;
+  studentNum = null;
+  document.querySelectorAll('.grade-btn').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  // 組・出席番号の選択をリセット
+  document.querySelectorAll('.class-btn').forEach(b => b.classList.remove('sel'));
+  document.querySelectorAll('.ss-btn').forEach(b => b.classList.remove('sel'));
+  document.getElementById('ss-start-btn').disabled = true;
+}
+
+function selectClass(c, btn) {
+  className = c;
+  studentNum = null;
+  document.querySelectorAll('.class-btn').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  document.querySelectorAll('.ss-btn').forEach(b => b.classList.remove('sel'));
+  document.getElementById('ss-start-btn').disabled = true;
+}
+
 function buildStudentSelect() {
   const grid = document.getElementById('ss-grid');
   for (let i = 1; i <= 40; i++) {
@@ -692,6 +757,7 @@ function buildStudentSelect() {
     btn.className = 'ss-btn';
     btn.textContent = i;
     btn.onclick = () => {
+      if (!grade || !className) return;
       document.querySelectorAll('.ss-btn').forEach(b => b.classList.remove('sel'));
       btn.classList.add('sel');
       studentNum = i;
@@ -749,83 +815,48 @@ function shuffle(arr) {
   return a;
 }
 
-/* ===== API呼び出し ===== */
-async function generateQuestions(words) {
-  const wordInfo = words.map((w,i)=>`${i+1}. ${w[0]}（${w[1]}）`).join('\n');
-  const prompt = `以下の英単語を使った穴埋め問題を${words.length}問作成してください。
-
-条件：
-・各英文は10語以内（必ず守ること）
-・自然でわかりやすい英語の文
-・空欄は対象単語が入る位置に配置（文頭でも可）
-・日本語訳も付ける（短く明確に・15字以内目安）
-・ひっかけ選択肢を3語選ぶ（同レベル英単語で品詞・文脈が近いもの）
-・必ずJSON配列だけを返す（前後の説明・マークダウン記法一切不要）
-
-単語：
-${wordInfo}
-
-出力形式（JSONのみ）：
-[{"word":"対象単語","before":"空欄前の文","after":"空欄後の文","ja":"日本語訳","hint":"ヒント一言","distractors":["wrong1","wrong2","wrong3"]}]
-
-注意：beforeとafterは空欄を合わせて10語以内になるよう調整。beforeかafterどちらかが空文字でも可。`;
-
-  const resp = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 2500,
-      messages: [{role:"user", content:prompt}]
-    })
+/* ===== 静的問題生成（APIなし） ===== */
+function generateStaticQuestions(targetWords, pool) {
+  return targetWords.map(w => {
+    // 英→日 / 日→英 をランダムに選択
+    const isEnToJa = Math.random() < 0.5;
+    // 同じ単語を除いたプールからdistractorを3つ選ぶ
+    const others = shuffle(pool.filter(x => x[0] !== w[0])).slice(0, 3);
+    if (isEnToJa) {
+      const choices = shuffle([w[1], ...others.map(x => x[1])]);
+      return { type:'en_to_ja', word:w[0], meaning:w[1],
+               display:w[0], displayClass:'en',
+               prompt:'次の英単語の意味を選んでください',
+               answer:w[1], choices };
+    } else {
+      const choices = shuffle([w[0], ...others.map(x => x[0])]);
+      return { type:'ja_to_en', word:w[0], meaning:w[1],
+               display:w[1], displayClass:'ja',
+               prompt:'次の意味に当てはまる英単語を選んでください',
+               answer:w[0], choices };
+    }
   });
-  if (!resp.ok) throw new Error('API error ' + resp.status);
-  const data = await resp.json();
-  const text = data.content.filter(b=>b.type==="text").map(b=>b.text).join("");
-  const clean = text.replace(/```json\n?|```/g,"").trim();
-  return JSON.parse(clean);
 }
 
 /* ===== クイズ開始 ===== */
-async function startQuiz() {
-  if (!studentNum) return;
+function startQuiz() {
+  if (!grade || !className || !studentNum) return;
   document.getElementById('ss-wrap').style.display = 'none';
   document.getElementById('quiz-wrap').style.display = 'block';
-  document.getElementById('student-badge').textContent = `出席番号 ${studentNum}`;
-  document.getElementById('nav-row').style.display = 'none';
-  document.getElementById('prog').style.width = '0%';
+  document.getElementById('student-badge').textContent = `${grade}年${className}組 ${studentNum}番`;
 
-  document.getElementById('quiz-body').innerHTML = `
-    <div class="card" style="text-align:center;">
-      <div class="loading-wrap">
-        <div class="loading-spinner"></div>
-        <div style="font-size:16px;font-weight:500;margin-bottom:8px;">問題を生成中...</div>
-        <div style="font-size:13px;color:#6b6b68;">AIが10問の例文を考えています。10〜20秒お待ちください。</div>
-      </div>
-    </div>`;
+  const pool = getWordsByRange();
+  quizWords = shuffle([...pool]).slice(0, QUIZ_SIZE);
+  questions = generateStaticQuestions(quizWords, pool);
+
+  current = 0;
+  answered = Array(QUIZ_SIZE).fill(false);
+  selected = Array(QUIZ_SIZE).fill(null);
 
   buildWordList();
-
-  try {
-    const pool = getWordsByRange();
-    quizWords = shuffle(pool).slice(0, QUIZ_SIZE);
-    questions = await generateQuestions(quizWords);
-
-    current = 0;
-    answered = Array(QUIZ_SIZE).fill(false);
-    selected = Array(QUIZ_SIZE).fill(null);
-    shuffledChoices = questions.map((q,i)=> shuffle([quizWords[i][0], ...q.distractors]));
-
-    document.getElementById('nav-row').style.display = 'flex';
-    renderQuiz();
-  } catch(e) {
-    document.getElementById('quiz-body').innerHTML = `
-      <div class="card">
-        <div style="color:#A32D2D;font-size:14px;margin-bottom:12px;">⚠ 問題の生成に失敗しました。ネットワーク接続を確認して再度お試しください。</div>
-        <button class="btn primary" onclick="startQuiz()">再試行</button>
-        <button class="btn" onclick="backToSelect()" style="margin-left:8px;">戻る</button>
-      </div>`;
-  }
+  document.getElementById('nav-row').style.display = 'flex';
+  document.getElementById('prog').style.width = `${1/QUIZ_SIZE*100}%`;
+  renderQuiz();
 }
 
 /* ===== クイズ描画 ===== */
@@ -834,40 +865,34 @@ function renderQuiz() {
   const q = questions[current];
   const isAns = answered[current];
   const sel = selected[current];
-  const correctWord = quizWords[current][0];
 
-  const blankSpan = isAns
-    ? `<span class="blank ${sel===correctWord?'correct':'wrong'}">${sel||'　　'}</span>`
-    : (sel ? `<span class="blank">${sel}</span>` : `<span class="blank">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>`);
-  const sentence = (q.before||'') + blankSpan + (q.after||'');
-
-  const choiceHTML = shuffledChoices[current].map(c => {
+  const colsCls = q.type === 'ja_to_en' ? 'choices' : 'choices choices-1col';
+  const choiceHTML = q.choices.map(c => {
     let cls = 'choice-btn';
     if (isAns) {
       cls += ' disabled';
-      if (c===correctWord) cls += ' correct';
-      else if (c===sel) cls += ' wrong';
-    } else if (c===sel) cls += ' selected';
-    const safe = c.replace(/'/g,"&#39;");
-    return `<button class="${cls}" onclick="choose('${safe}')">${c}</button>`;
+      if (c === q.answer) cls += ' correct';
+      else if (c === sel) cls += ' wrong';
+    } else if (c === sel) cls += ' selected';
+    const safeVal = JSON.stringify(c).replace(/"/g,'&quot;');
+    return `<button class="${cls}" onclick="choose(${safeVal})">${c}</button>`;
   }).join('');
 
   let fbHTML = '';
   if (isAns) {
-    const ok = sel===correctWord;
+    const ok = sel === q.answer;
     fbHTML = `<div class="feedback show ${ok?'correct':'wrong'}">
-      ${ok ? '✓ 正解！' : `✗ 不正解。正解は <strong>${correctWord}</strong>`}
-      &nbsp;—&nbsp;${correctWord}: ${quizWords[current][1]}
+      ${ok ? '✓ 正解！' : `✗ 不正解。正解は <strong>${q.answer}</strong>`}
+      &nbsp;—&nbsp;<span style="font-size:12px;">${q.word}：${q.meaning}</span>
     </div>`;
   }
 
   document.getElementById('quiz-body').innerHTML = `
     <div class="card">
       <div class="q-num">問題 ${current+1} / ${QUIZ_SIZE}</div>
-      <div class="q-sentence">${sentence}</div>
-      <div class="translation">🇯🇵 ${q.ja||''}</div>
-      <div class="hint">💡 ${q.hint||correctWord}</div>
-      <div class="choices">${choiceHTML}</div>
+      <div class="q-prompt">${q.prompt}</div>
+      <div class="q-display ${q.displayClass}">${q.display}</div>
+      <div class="${colsCls}">${choiceHTML}</div>
       ${fbHTML}
     </div>`;
 
@@ -896,7 +921,7 @@ function move(dir) {
 /* ===== 結果 ===== */
 function showResult() {
   let score = 0;
-  questions.forEach((q,i)=>{ if(selected[i]===quizWords[i][0]) score++; });
+  questions.forEach((q,i)=>{ if(selected[i]===q.answer) score++; });
   const pct = Math.round(score/QUIZ_SIZE*100);
   const msg = pct===100 ? '🎉 満点です！素晴らしい！全問正解、完璧です！'
     : pct>=80 ? '👏 よくできました！あと少しで満点です。'
@@ -904,12 +929,14 @@ function showResult() {
     : '💪 もう一度チャレンジしてみましょう！解説を読んで復習してね。';
 
   const reviewH = questions.map((q,i) => {
-    const ok = selected[i]===quizWords[i][0];
-    const sent = (q.before||'')+'['+quizWords[i][0]+']'+(q.after||'');
+    const ok = selected[i] === q.answer;
+    const typeLabel = q.type==='en_to_ja' ? '英→日' : '日→英';
     return `<div class="review-item"><div class="review-row">
       <span class="mark ${ok?'ok':'ng'}">${ok?'○':'×'}</span>
-      <span><b>問${i+1}.</b> ${sent}
-        ${!ok?`<span class="ans-wrong">（あなた: ${selected[i]||'未回答'}）</span>`:''}</span>
+      <span><b>問${i+1}.</b> <span style="font-size:10px;background:#f5f4f0;padding:1px 5px;border-radius:3px;">${typeLabel}</span>
+        &nbsp;<strong>${q.word}</strong>（${q.meaning}）
+        ${!ok?`<span class="ans-wrong">→ あなた: ${selected[i]||'未回答'}</span>`:''}
+      </span>
     </div></div>`;
   }).join('');
 
@@ -926,8 +953,8 @@ function showResult() {
     </div>`;
 
   saveResult(score, pct, questions.map((q,i)=>({
-    word: quizWords[i][0],
-    correct: selected[i]===quizWords[i][0],
+    word: q.word,
+    correct: selected[i]===q.answer,
     selected: selected[i]||'未回答'
   })));
 }
@@ -944,7 +971,9 @@ function saveResult(score, pct, details) {
     const key = 'target1900_results';
     const all = JSON.parse(localStorage.getItem(key)||'[]');
     all.push({
+      grade, className,
       student: studentNum,
+      label: `${grade}年${className}組${String(studentNum).padStart(2,'0')}番`,
       score, pct,
       range: quizRange,
       date: new Date().toLocaleString('ja-JP'),
@@ -982,22 +1011,23 @@ function unlockAdmin() {
 
 function renderAdminTable() {
   const all = JSON.parse(localStorage.getItem('target1900_results')||'[]');
-  const byStudent = {};
+  const byKey = {};
   all.forEach(r => {
-    if (!byStudent[r.student]) byStudent[r.student] = [];
-    byStudent[r.student].push(r);
+    const k = r.label || `${r.grade||'?'}年${r.className||'?'}組${String(r.student).padStart(2,'0')}番`;
+    if (!byKey[k]) byKey[k] = [];
+    byKey[k].push(r);
   });
   const tbl = document.getElementById('adm-tbl');
-  if (!Object.keys(byStudent).length) {
-    tbl.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888780;">データがありません</td></tr>';
+  if (!Object.keys(byKey).length) {
+    tbl.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888780;padding:1.5rem;">データがありません</td></tr>';
     return;
   }
-  tbl.innerHTML = `<thead><tr><th>出席番号</th><th>回数</th><th>平均正解率</th><th>最終実施</th><th>間違えた単語</th></tr></thead><tbody>` +
-    Object.entries(byStudent).sort((a,b)=>a[0]-b[0]).map(([sn, records]) => {
+  tbl.innerHTML = `<thead><tr><th>生徒</th><th>回数</th><th>平均正解率</th><th>最終実施</th><th>間違えた単語</th></tr></thead><tbody>` +
+    Object.entries(byKey).sort((a,b)=>a[0]<b[0]?-1:1).map(([label, records]) => {
       const avg = Math.round(records.reduce((s,r)=>s+r.pct,0)/records.length);
       const last = records[records.length-1];
       const wrongWords = [...new Set(records.flatMap(r=>r.wrong||[]))].slice(0,8).join('、');
-      return `<tr><td><strong>${sn}</strong></td><td>${records.length}回</td>
+      return `<tr><td><strong>${label}</strong></td><td>${records.length}回</td>
         <td>${avg}%</td><td style="font-size:11px;">${last.date}</td>
         <td class="wrong-txt">${wrongWords||'なし'}</td></tr>`;
     }).join('') + '</tbody>';
@@ -1006,8 +1036,11 @@ function renderAdminTable() {
 function exportCSV() {
   const all = JSON.parse(localStorage.getItem('target1900_results')||'[]');
   if (!all.length) { alert('データがありません'); return; }
-  const rows = [['出席番号','スコア','正解率(%)','範囲','実施日時','間違えた単語']];
-  all.forEach(r => rows.push([r.student, r.score, r.pct, r.range||'全範囲', r.date, (r.wrong||[]).join(' / ')]));
+  const rows = [['生徒','学年','組','出席番号','スコア','正解率(%)','範囲','実施日時','間違えた単語']];
+  all.forEach(r => {
+    const label = r.label || `${r.grade||''}年${r.className||''}組${r.student}番`;
+    rows.push([label, r.grade||'', r.className||'', r.student, r.score, r.pct, r.range||'全範囲', r.date, (r.wrong||[]).join(' / ')]);
+  });
   const csv = rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
   const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
   const a = document.createElement('a');
@@ -1026,6 +1059,6 @@ function clearData() {
 /* ===== 初期化 ===== */
 buildStudentSelect();
 </script>
-<div class="footer-note">📖 英単語ターゲット1900（6訂版）収録語 全1900語 ／ 問題は生成AI『Claude』を利用して毎回作成しています。誤りを見つけた場合はお知らせください。</div>
+<div class="footer-note">📖 英単語ターゲット1900（6訂版）全1900語収録 ／ 英→日・日→英のランダム4択クイズ</div>
 </body>
 </html>
